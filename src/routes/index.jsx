@@ -1,11 +1,32 @@
 import { Routes, Route } from "react-router-dom";
 import AdminTemplate from "../pages/AdminTemplate";
 import HomeTemplate from "../pages/HomeTemplate";
+import HomePage from "../pages/HomeTemplate/HomePage";
+import MovieDetailsPage from "../pages/HomeTemplate/MovieDetailsPage";
+import AuthPage from "../pages/HomeTemplate/AuthPage";
 
 const routes = [
   {
     path: "/",
     element: HomeTemplate,
+    nested: [
+      {
+        path: "",
+        element: HomePage,
+      },
+      {
+        path: "movie-details/:movieId",
+        element: MovieDetailsPage,
+      },
+      {
+        path: "login",
+        element: AuthPage
+      },
+      {
+        path: "register",
+        element: AuthPage
+      }
+    ],
   },
   {
     path: "admin",
@@ -26,7 +47,9 @@ export const generateRoutes = () => {
         </Route>
       );
     } else {
-        return <Route key={route.path} path={route.path} element={<route.element/>} />
+      return (
+        <Route key={route.path} path={route.path} element={<route.element />} />
+      );
     }
   });
 };
