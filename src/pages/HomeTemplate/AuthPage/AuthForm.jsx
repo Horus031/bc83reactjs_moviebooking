@@ -1,8 +1,88 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { loginApi, registerApi } from "../../../services/auth.api";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../store/auth.slice";
 
 const AuthForm = (props) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { mode } = props;
+
+  const { mutate: handleLogin } = useMutation({
+    mutationFn: (values) => loginApi(values),
+    onSuccess: (user) => {
+      if (!user) return;
+
+      localStorage.setItem("user", JSON.stringify(user));
+      dispatch(setUser(user));
+      navigate(user.maLoaiNguoiDung === "QuanTri" ? "/admin" : "/");
+    },
+
+    onError: () => {
+      console.log("Login failed")
+    }
+  })
+
+  const { mutate: handleRegister } = useMutation({
+    mutationFn: (values) => (registerApi(values)),
+    onSuccess: () => {
+      alert("Successfully registered, please login");
+      navigate("/login")
+    },
+    onError: () => {
+      console.log("Registration failed")
+    }
+  })
+  
+
+  const isLoading = handleLogin.isPending || handleRegister.isPending;
+
+  const [authValues, setAuthValues] = useState({
+    taiKhoan: "",
+    matKhau: "",
+    email: "",
+    soDt: "",
+    maNhom: "GP01",
+    hoTen: "",
+    xacNhanMatKhau: "",
+  });
+
+  const handleOnChange = (event) => {
+    setAuthValues({
+      ...authValues,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+
+  const handleOnSubmit = (event) => {
+    event.preventDefault();
+
+    if (mode === "/login") {
+      const loginData = {
+        taiKhoan: authValues.taiKhoan,
+        matKhau: authValues.matKhau,
+      };
+      handleLogin(loginData);
+    } else {
+      if (authValues.matKhau !== authValues.xacNhanMatKhau) {
+        alert("Passwords don't match");
+        return;
+      }
+
+      const registerData = {
+        taiKhoan: authValues.taiKhoan,
+        matKhau: authValues.matKhau,
+        email: authValues.email,
+        soDt: authValues.soDt,
+        maNhom: authValues.maNhom,
+        hoTen: authValues.hoTen
+      };
+      handleRegister(registerData);
+    }
+  };
 
   return (
     <div className="w-full max-w-md relative z-10">
@@ -26,41 +106,45 @@ const AuthForm = (props) => {
         )}
       </div>
       <div className="bg-slate-800/80 backdrop-blur-md border-slate-700 shadow-2xl p-6 border rounded-xl">
-        <h3 className="text-2xl font-bold text-center text-white">{mode === "/login" ? "Sign In" : "Create Account"}</h3>
+        <h3 className="text-2xl font-bold text-center text-white">
+          {mode === "/login" ? "Sign In" : "Create Account"}
+        </h3>
 
         <div className="space-y-6">
-          <form action="" className="space-y-4">
+          <form onSubmit={handleOnSubmit} action="" className="space-y-4" >
             {mode === "/login" ? (
               <>
                 <div className="space-y-4">
                   <label
-                    htmlFor="username"
+                    htmlFor="taiKhoan"
                     className="text-slate-300 font-medium text-base"
                   >
                     Username
                   </label>
                   <div className="relative">
                     <input
+                      onChange={handleOnChange}
                       type="text"
-                      name="username"
-                      id="username"
-                      placeholder="Enter your email"
+                      name="taiKhoan"
+                      id="taiKhoan"
+                      placeholder="Enter your username"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor="password"
+                    htmlFor="matKhau"
                     className="text-slate-300 font-medium text-base"
                   >
                     Password
                   </label>
                   <div className="relative">
                     <input
-                      type="text"
-                      name="password"
-                      id="password"
+                      onChange={handleOnChange}
+                      type="password"
+                      name="matKhau"
+                      id="matKhau"
                       placeholder="Enter your password"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -86,16 +170,17 @@ const AuthForm = (props) => {
               <>
                 <div className="space-y-4">
                   <label
-                    htmlFor="fullname"
+                    htmlFor="hoTen"
                     className="text-slate-300 font-medium text-base"
                   >
                     Full Name
                   </label>
                   <div className="relative">
                     <input
+                      onChange={handleOnChange}
                       type="text"
-                      name="fullname"
-                      id="fullname"
+                      name="hoTen"
+                      id="hoTen"
                       placeholder="Enter your full name"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -103,16 +188,17 @@ const AuthForm = (props) => {
                 </div>
                 <div className="space-y-4">
                   <label
-                    htmlFor="username"
+                    htmlFor="taiKhoan"
                     className="text-slate-300 font-medium text-base"
                   >
                     Username
                   </label>
                   <div className="relative">
                     <input
+                      onChange={handleOnChange}
                       type="text"
-                      name="username"
-                      id="username"
+                      name="taiKhoan"
+                      id="taiKhoan"
                       placeholder="Enter your username"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -127,6 +213,7 @@ const AuthForm = (props) => {
                   </label>
                   <div className="relative">
                     <input
+                      onChange={handleOnChange}
                       type="text"
                       name="email"
                       id="email"
@@ -137,16 +224,17 @@ const AuthForm = (props) => {
                 </div>
                 <div className="space-y-4">
                   <label
-                    htmlFor="email"
+                    htmlFor="soDt"
                     className="text-slate-300 font-medium text-base"
                   >
                     Phone Number
                   </label>
                   <div className="relative">
                     <input
+                      onChange={handleOnChange}
                       type="text"
-                      name="phone"
-                      id="phone"
+                      name="soDt"
+                      id="soDt"
                       placeholder="Enter your phone number"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -154,16 +242,17 @@ const AuthForm = (props) => {
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor="password"
+                    htmlFor="matKhau"
                     className="text-slate-300 font-medium text-base"
                   >
                     Password
                   </label>
                   <div className="relative">
                     <input
-                      type="text"
-                      name="password"
-                      id="password"
+                      onChange={handleOnChange}
+                      type="password"
+                      name="matKhau"
+                      id="matKhau"
                       placeholder="Enter your password"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -171,16 +260,17 @@ const AuthForm = (props) => {
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor="password"
+                    htmlFor="xacNhanMatKhau"
                     className="text-slate-300 font-medium text-base"
                   >
                     Confirm Password
                   </label>
                   <div className="relative">
                     <input
-                      type="text"
-                      name="confirm-password"
-                      id="confirm-password"
+                      onChange={handleOnChange}
+                      type="password"
+                      name="xacNhanMatKhau"
+                      id="xacNhanMatKhau"
                       placeholder="Confirm your password"
                       className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                     />
@@ -193,7 +283,7 @@ const AuthForm = (props) => {
               type="submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg font-semibold rounded-lg"
             >
-              {mode === "/login" ? "Sign In" : "Create Account"}
+              {isLoading ? "Processing..." : (mode === "/login" ? "Sign In" : "Create Account")}
             </button>
           </form>
 

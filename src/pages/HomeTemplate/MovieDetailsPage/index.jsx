@@ -1,23 +1,51 @@
 import { useQuery } from "@tanstack/react-query";
-import React from "react";
-import { useParams } from "react-router-dom";
-import { getMovieDetailsApi } from "../../../services/movie.api";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  getMovieDetailsApi,
+} from "../../../services/movie.api";
 import { format } from "date-fns";
+import { useState } from "react";
+import MovieModal from "../components/MovieModal";
+import { useSelector } from "react-redux";
 
 const MovieDetailsPage = () => {
   const { movieId } = useParams();
+  const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+  const [modalContent, setModalContent] = useState({
+    state: false,
+    type: "",
+  });
 
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: movieDetail,
+    isLoading: isMovieLoading,
+    isError: isMovieError,
+  } = useQuery({
     queryKey: ["movie-details", movieId],
     queryFn: () => getMovieDetailsApi(movieId),
     enabled: !!movieId,
   });
 
-  if (isLoading) return <div>Loading...</div>;
+  
 
-  if (isError) return <div>Something went wrong, please try again</div>;
+  if (isMovieLoading) return <div>Loading...</div>;
 
-  const movie = data.content;
+  if (isMovieError) return <div>Something went wrong, please try again</div>;
+
+  const movie = movieDetail.content;
+
+  const handleShowModalContent = (type) => {
+    if (type === "booking" && !user) {
+      navigate("/login")
+    }
+
+    setModalContent({
+      state: true,
+      type: type,
+    });
+  };
+
 
   return (
     <div>
@@ -73,13 +101,30 @@ const MovieDetailsPage = () => {
               <p className="text-xl text-slate-200 mb-6 max-w-2xl">
                 {movie?.moTa}
               </p>
-              <div className="flex space-x-4">
-                <button className="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-500 cursor-pointer">
+              <div className="flex space-x-4 items-center">
+                <button
+                  onClick={() => handleShowModalContent("booking")}
+                  className="block text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none font-medium rounded-lg px-4 py-2 text-center"
+                  type="button"
+                >
                   Book Now
                 </button>
-                <button className="px-4 py-2 rounded-lg bg-black hover:bg-white/20 cursor-pointer text-white">
+
+                <button
+                  onClick={() => handleShowModalContent("trailer")}
+                  className="px-4 py-2 rounded-lg bg-black hover:bg-white/20 cursor-pointer text-white"
+                >
                   Watch Trailer
                 </button>
+
+                {/* Main modal */}
+                {modalContent.state && (
+                  <MovieModal
+                    movie={movie}
+                    modalContent={modalContent}
+                    setModalContent={setModalContent}
+                  />
+                )}
               </div>
             </div>
           </div>

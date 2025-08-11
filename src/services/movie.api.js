@@ -31,3 +31,35 @@ export const getMovieDetailsApi = async (maPhim) => {
         console.log(error);
     }
 }
+
+export const getTheaterListApi = async () => {
+  try {
+    const response = await api.get("QuanLyRap/LayThongTinHeThongRap")
+
+
+    return response.data.content;
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const getMovieScheduleApi = async (maPhim) => {
+  try {
+    const response = await api.get(`QuanLyRap/LayThongTinLichChieuPhim?MaPhim=${maPhim}`);
+
+
+    return response.data.content;
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const getSeatInformationApi = async(maLichChieu) => {
+  try {
+    const response = await api.get(`QuanLyDatVe/LayDanhSachPhongVe?MaLichChieu=${maLichChieu}`);
+
+    return response.data.content;
+  } catch (error) {
+    console.log(error)
+  }
+}

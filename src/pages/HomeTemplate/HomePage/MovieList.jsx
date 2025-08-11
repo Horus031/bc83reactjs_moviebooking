@@ -6,7 +6,7 @@ import Movie from "./Movie";
 const MovieList = () => {
     const { data, isLoading, isError } = useQuery({
         queryKey: ["movie-list"],
-        queryFn: () => getMovieListApi("GP02")
+        queryFn: () => getMovieListApi("GP01")
     })
 
     if (isLoading) return <div>Loading...</div>

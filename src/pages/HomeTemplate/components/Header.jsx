@@ -1,7 +1,16 @@
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { NavLink } from "react-router-dom";
+import { clearUser } from "../../../store/auth.slice";
 
 const Header = () => {
+  const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+
+  const handleLogout = () => {
+    localStorage.clear();
+    dispatch(clearUser());
+  };
   return (
     <div className=" sticky top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-slate-700">
       <div className="container mx-auto flex w-full justify-between items-center">
@@ -62,9 +71,26 @@ const Header = () => {
               </button>
             </div>
           </form>
-          <button type="button" className="bg-red-500 rounded-lg px-4 py-2 text-white font-medium">
-            <NavLink to="/login">Login</NavLink>
-          </button>
+          {user ? (
+            <>
+              <button
+                onClick={handleLogout}
+                type="button"
+                className="bg-red-500 rounded-lg px-4 py-2 text-white font-medium cursor-pointer"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="bg-red-500 rounded-lg px-4 py-2 text-white font-medium cursor-pointer"
+              >
+                <NavLink to="/login">Login</NavLink>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
