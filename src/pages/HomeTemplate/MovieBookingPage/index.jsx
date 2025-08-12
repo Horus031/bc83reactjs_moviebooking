@@ -1,40 +1,65 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getSeatInformationApi } from "../../../services/movie.api";
+import { getSeatInformationApi, seatBookingApi } from "../../../services/movie.api";
 
 const MovieBookingPage = () => {
   const { scheduleId } = useParams();
+  const [bookingInfor, setBookingInfor] = useState({
+    maLichChieu: scheduleId,
+    danhSachVe: []
+  });
   const [chosenSeats, setChosenSeats] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const navigate = useNavigate();
 
   const {
     data: seatInformation,
-    isLoading,
-    isError,
+    isLoading: isSeatLoading,
+    isError: isSeatError,
   } = useQuery({
     queryKey: ["seat-information"],
     queryFn: () => getSeatInformationApi(scheduleId),
   });
 
-  if (isLoading) return <p>Loading seats...</p>;
+  const { mutate: handleBooking } = useMutation({
+    mutationFn: (values) => seatBookingApi(values),
+    onSuccess: (response) => {
+      if (!response) return;
 
-  if (isError) return <p>Something went wrong.</p>;
+      alert(`${response}, Hãy kiểm tra danh sách vé của bạn trong phần hồ sơ`)
+      navigate("/")
+    },
+    onError: () => {
+      console.log("Tickets booking failed.")
+    }
+  })
+
+  if (isSeatLoading) return <p>Loading seats...</p>;
+
+  if (isSeatError) return <p>Something went wrong.</p>;
 
   const { danhSachGhe, thongTinPhim } = seatInformation;
+
 
   const handleChooseSeat = (seat) => {
     const isChosen = chosenSeats.includes(seat.tenGhe);
     let updatedSeats;
+    let updatedDanhSachVe;
     if (isChosen) {
       updatedSeats = chosenSeats.filter((ghe) => ghe !== seat.tenGhe);
+      updatedDanhSachVe = bookingInfor.danhSachVe.filter((ve) => ve.maGhe !== seat.maGhe);
       setTotalPrice(totalPrice - seat.giaVe);
     } else {
       updatedSeats = [...chosenSeats, seat.tenGhe];
+      updatedDanhSachVe = [...bookingInfor.danhSachVe, { maGhe: seat.maGhe, giaVe: seat.giaVe }];
       setTotalPrice(totalPrice + seat.giaVe);
     }
     setChosenSeats(updatedSeats);
+    setBookingInfor({
+      ...bookingInfor,
+      danhSachVe: updatedDanhSachVe,
+    });
   };
 
   const renderSeats = () => {
@@ -60,8 +85,7 @@ const MovieBookingPage = () => {
         return;
     }
 
-    alert("Successfully booking! Please check your information")
-    navigate("/");
+    handleBooking(bookingInfor);
   }
 
   return (

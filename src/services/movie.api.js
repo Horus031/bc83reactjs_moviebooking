@@ -63,3 +63,13 @@ export const getSeatInformationApi = async(maLichChieu) => {
     console.log(error)
   }
 }
+
+export const seatBookingApi = async(values) => {
+  try {
+    const response = await api.post(`QuanLyDatVe/DatVe`, values)
+
+    return response.data.content;
+  } catch (error) {
+    console.log(error)
+  }
+}

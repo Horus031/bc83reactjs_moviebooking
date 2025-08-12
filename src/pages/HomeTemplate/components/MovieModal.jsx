@@ -92,7 +92,6 @@ const MovieModal = (props) => {
       (schedule) => schedule.maHeThongRap === theaterName
     );
 
-    console.log(scheduleWithTheater);
 
     if (!scheduleWithTheater || scheduleWithTheater.length === 0) {
       return <div>No schedule available for this theater.</div>;

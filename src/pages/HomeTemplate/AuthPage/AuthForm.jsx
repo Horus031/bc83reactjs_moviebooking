@@ -44,7 +44,7 @@ const AuthForm = (props) => {
     matKhau: "",
     email: "",
     soDt: "",
-    maNhom: "GP01",
+    maNhom: "GP00",
     hoTen: "",
     xacNhanMatKhau: "",
   });

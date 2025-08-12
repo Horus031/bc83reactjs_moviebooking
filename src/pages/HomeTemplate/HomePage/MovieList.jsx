@@ -24,7 +24,7 @@ const MovieList = () => {
   return (
     <div className="container mx-auto py-16 px-4">
       <div className="flex items-center justify-between mb-8">
-        <h3 className="text-3xl font-bold text-white">Now Playing</h3>
+        <h3 className="text-3xl font-bold text-white">Now Showing</h3>
         <div className="space-x-4">
           <button className="bg-gray-600 px-4 py-2 rounded-lg cursor-pointer active:scale-90">
             <svg

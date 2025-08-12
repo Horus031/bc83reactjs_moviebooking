@@ -5,6 +5,7 @@ import HomePage from "../pages/HomeTemplate/HomePage";
 import MovieDetailsPage from "../pages/HomeTemplate/MovieDetailsPage";
 import AuthPage from "../pages/HomeTemplate/AuthPage";
 import MovieBookingPage from "../pages/HomeTemplate/MovieBookingPage";
+import ProfilePage from "../pages/HomeTemplate/ProfilePage";
 
 const routes = [
   {
@@ -22,6 +23,10 @@ const routes = [
       {
         path: "movie-booking/:scheduleId",
         element: MovieBookingPage
+      },
+      {
+        path: "/profile",
+        element: ProfilePage
       },
       {
         path: "login",
