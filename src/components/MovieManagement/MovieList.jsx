@@ -44,12 +44,7 @@ const MovieList = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">🎬 Quản lý phim</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-        >
-          Thêm phim
-        </button>
+        
       </div>
 
       {/* Search */}
