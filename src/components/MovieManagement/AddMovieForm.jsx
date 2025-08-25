@@ -7,8 +7,11 @@ const AddMovieForm = ({ onClose, onRefresh }) => {
     moTa: "",
     ngayKhoiChieu: "",
     trailer: "",
-    maNhom: "GP01",
+    maNhom: "GP00",
     danhGia: 5,
+    dangChieu: false,
+    sapChieu: false,
+    hot: false,
   });
 
   const [hinhAnh, setHinhAnh] = useState(null);

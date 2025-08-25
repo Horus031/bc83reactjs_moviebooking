@@ -5,12 +5,16 @@ import { loginApi, registerApi } from "../../../services/auth.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../store/auth.slice";
 
+const validateEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const AuthForm = (props) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [errors, setErrors] = useState({});
   const { mode } = props;
 
-  const { mutate: handleLogin } = useMutation({
+  const { mutate: handleLogin, isPending: isLoginPending, isError: isLoginError } = useMutation({
     mutationFn: (values) => loginApi(values),
     onSuccess: (user) => {
       if (!user) return;
@@ -19,22 +23,22 @@ const AuthForm = (props) => {
       navigate(user.maLoaiNguoiDung === "QuanTri" ? "/admin" : "/");
     },
     onError: () => {
-      console.log("Login failed");
+      setErrors({ form: "Login failed. Please check your credentials." });
     },
   });
 
-  const { mutate: handleRegister } = useMutation({
+  const { mutate: handleRegister, isPending: isRegisterPending, isError: isRegisterError } = useMutation({
     mutationFn: (values) => registerApi(values),
     onSuccess: () => {
       alert("Successfully registered, please login");
       navigate("/login");
     },
     onError: () => {
-      console.log("Registration failed");
+      setErrors({ form: "Registration failed. Please try again." });
     },
   });
 
-  const isLoading = handleLogin.isPending || handleRegister.isPending;
+  const isLoading = isLoginPending || isRegisterPending;
 
   const [authValues, setAuthValues] = useState({
     taiKhoan: "",
@@ -52,23 +56,51 @@ const AuthForm = (props) => {
       ...authValues,
       [event.target.name]: event.target.value,
     });
+    setErrors({ ...errors, [event.target.name]: "" }); // Clear error on change
+  };
+
+  const validateLogin = () => {
+    const newErrors = {};
+    if (!authValues.taiKhoan) newErrors.taiKhoan = "Username is required.";
+    if (!authValues.matKhau) newErrors.matKhau = "Password is required.";
+    return newErrors;
+  };
+
+  const validateRegister = () => {
+    const newErrors = {};
+    if (!authValues.hoTen) newErrors.hoTen = "Full name is required.";
+    if (!authValues.taiKhoan) newErrors.taiKhoan = "Username is required.";
+    if (!authValues.email) newErrors.email = "Email is required.";
+    else if (!validateEmail(authValues.email)) newErrors.email = "Invalid email format.";
+    if (!authValues.soDt) newErrors.soDt = "Phone number is required.";
+    if (!authValues.matKhau) newErrors.matKhau = "Password is required.";
+    else if (authValues.matKhau.length < 6) newErrors.matKhau = "Password must be at least 6 characters.";
+    if (!authValues.xacNhanMatKhau) newErrors.xacNhanMatKhau = "Please confirm your password.";
+    else if (authValues.matKhau !== authValues.xacNhanMatKhau) newErrors.xacNhanMatKhau = "Passwords do not match.";
+    return newErrors;
   };
 
   const handleOnSubmit = (event) => {
     event.preventDefault();
+    let newErrors = {};
 
     if (mode === "/login") {
+      newErrors = validateLogin();
+      if (Object.keys(newErrors).length) {
+        setErrors(newErrors);
+        return;
+      }
       const loginData = {
         taiKhoan: authValues.taiKhoan,
         matKhau: authValues.matKhau,
       };
       handleLogin(loginData);
     } else {
-      if (authValues.matKhau !== authValues.xacNhanMatKhau) {
-        alert("Passwords don't match");
+      newErrors = validateRegister();
+      if (Object.keys(newErrors).length) {
+        setErrors(newErrors);
         return;
       }
-
       const registerData = {
         taiKhoan: authValues.taiKhoan,
         matKhau: authValues.matKhau,
@@ -78,11 +110,15 @@ const AuthForm = (props) => {
         maNhom: "GP00",
         maLoaiNguoiDung: "KhachHang",
       };
-
-      console.log("📦 Dữ liệu đăng ký:", registerData);
       handleRegister(registerData);
     }
   };
+
+  const isError = isLoginError | isRegisterError;
+
+  if (isError) {
+    console.log("This is error")
+  }
 
   return (
     <div className="w-full max-w-md relative z-10">
@@ -112,6 +148,9 @@ const AuthForm = (props) => {
 
         <div className="space-y-6">
           <form onSubmit={handleOnSubmit} className="space-y-4">
+            {errors.form && (
+              <div className="text-red-500 text-center mb-2">{errors.form}</div>
+            )}
             {mode === "/login" ? (
               <>
                 <div className="space-y-4">
@@ -130,6 +169,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your username"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.taiKhoan && (
+                    <div className="text-red-500 text-sm">{errors.taiKhoan}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -147,6 +189,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your password"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.matKhau && (
+                    <div className="text-red-500 text-sm">{errors.matKhau}</div>
+                  )}
                 </div>
               </>
             ) : (
@@ -167,6 +212,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your full name"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.hoTen && (
+                    <div className="text-red-500 text-sm">{errors.hoTen}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -184,6 +232,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your username"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.taiKhoan && (
+                    <div className="text-red-500 text-sm">{errors.taiKhoan}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -201,6 +252,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your email"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.email && (
+                    <div className="text-red-500 text-sm">{errors.email}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -218,6 +272,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your phone number"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.soDt && (
+                    <div className="text-red-500 text-sm">{errors.soDt}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -235,6 +292,9 @@ const AuthForm = (props) => {
                     placeholder="Enter your password"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.matKhau && (
+                    <div className="text-red-500 text-sm">{errors.matKhau}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -252,6 +312,9 @@ const AuthForm = (props) => {
                     placeholder="Confirm your password"
                     className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
                   />
+                  {errors.xacNhanMatKhau && (
+                    <div className="text-red-500 text-sm">{errors.xacNhanMatKhau}</div>
+                  )}
                 </div>
               </>
             )}
@@ -296,5 +359,6 @@ const AuthForm = (props) => {
     </div>
   );
 };
+
 
 export default AuthForm;

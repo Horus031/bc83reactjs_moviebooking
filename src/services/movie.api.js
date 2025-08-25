@@ -80,14 +80,13 @@ export const seatBookingApi = async (values) => {
 
 // Thêm phim mới (có hình)
 export const addMovieApi = async (formData) => {
-  try {
-    const response = await api.post("QuanLyPhim/ThemPhimUploadHinh", formData);
-    return response.data.content;
-  } catch (error) {
-    console.log(error);
-  }
+  // KHÔNG tự set headers Authorization ở đây để khỏi đè instance
+  return api.post("QuanLyPhim/ThemPhimUploadHinh", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
-
 // Cập nhật phim (có hình)
 export const updateMovieApi = async (formData) => {
   try {

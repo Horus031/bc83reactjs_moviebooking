@@ -6,7 +6,7 @@ export const loginApi = async (values) => {
 
     return response.data.content;
   } catch (error) {
-    console.log(" Lỗi đăng nhập:", error.response?.data);
+    alert(error.response?.data.content)
   }
 };
 
@@ -15,7 +15,7 @@ export const registerApi = async (values) => {
     const response = await api.post("QuanLyNguoiDung/DangKy", values);
     return response;
   } catch (error) {
-    console.log(error);
+    alert(error.response?.data.content)
   }
 };
 
@@ -29,7 +29,7 @@ export const getUserListApi = async (tuKhoa = "") => {
     });
     return response.data.content;
   } catch (error) {
-    console.log(error);
+    alert(error.response?.data.content)
   }
 };
 
@@ -40,6 +40,6 @@ export const deleteUserApi = async (taiKhoan) => {
     );
     return response.data.content;
   } catch (error) {
-    console.log(error);
+    alert(error.response?.data.content)
   }
 };
