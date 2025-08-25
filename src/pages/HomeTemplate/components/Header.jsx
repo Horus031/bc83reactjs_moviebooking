@@ -1,6 +1,6 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 import { clearUser } from "../../../store/auth.slice";
 
 const Header = () => {
@@ -16,7 +16,12 @@ const Header = () => {
     <div className=" sticky top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-slate-700">
       <div className="container mx-auto flex w-full justify-between items-center">
         <div className="flex space-x-8 items-center py-4">
-          <span className="text-2xl font-bold text-white">CinemaMax</span>
+          <Link
+            to="/"
+            className="text-2xl font-bold text-white hover:text-yellow-300 transition"
+          >
+            🎬 CinemaMax
+          </Link>
           <div>
             <ul className="flex space-x-8 text-gray-400 font-semibold">
               <li>

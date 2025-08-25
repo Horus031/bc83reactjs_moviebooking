@@ -5,39 +5,40 @@ import { loginApi, registerApi } from "../../../services/auth.api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../store/auth.slice";
 
+const validateEmail = (email) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const AuthForm = (props) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [errors, setErrors] = useState({});
   const { mode } = props;
 
-  const { mutate: handleLogin } = useMutation({
+  const { mutate: handleLogin, isPending: isLoginPending, isError: isLoginError } = useMutation({
     mutationFn: (values) => loginApi(values),
     onSuccess: (user) => {
       if (!user) return;
-
       localStorage.setItem("user", JSON.stringify(user));
       dispatch(setUser(user));
       navigate(user.maLoaiNguoiDung === "QuanTri" ? "/admin" : "/");
     },
-
     onError: () => {
-      console.log("Login failed")
-    }
-  })
+      setErrors({ form: "Login failed. Please check your credentials." });
+    },
+  });
 
-  const { mutate: handleRegister } = useMutation({
-    mutationFn: (values) => (registerApi(values)),
+  const { mutate: handleRegister, isPending: isRegisterPending, isError: isRegisterError } = useMutation({
+    mutationFn: (values) => registerApi(values),
     onSuccess: () => {
       alert("Successfully registered, please login");
-      navigate("/login")
+      navigate("/login");
     },
     onError: () => {
-      console.log("Registration failed")
-    }
-  })
-  
+      setErrors({ form: "Registration failed. Please try again." });
+    },
+  });
 
-  const isLoading = handleLogin.isPending || handleRegister.isPending;
+  const isLoading = isLoginPending || isRegisterPending;
 
   const [authValues, setAuthValues] = useState({
     taiKhoan: "",
@@ -46,6 +47,7 @@ const AuthForm = (props) => {
     soDt: "",
     maNhom: "GP00",
     hoTen: "",
+    maLoaiNguoiDung: "KhachHang",
     xacNhanMatKhau: "",
   });
 
@@ -54,35 +56,69 @@ const AuthForm = (props) => {
       ...authValues,
       [event.target.name]: event.target.value,
     });
+    setErrors({ ...errors, [event.target.name]: "" }); // Clear error on change
   };
 
+  const validateLogin = () => {
+    const newErrors = {};
+    if (!authValues.taiKhoan) newErrors.taiKhoan = "Username is required.";
+    if (!authValues.matKhau) newErrors.matKhau = "Password is required.";
+    return newErrors;
+  };
+
+  const validateRegister = () => {
+    const newErrors = {};
+    if (!authValues.hoTen) newErrors.hoTen = "Full name is required.";
+    if (!authValues.taiKhoan) newErrors.taiKhoan = "Username is required.";
+    if (!authValues.email) newErrors.email = "Email is required.";
+    else if (!validateEmail(authValues.email)) newErrors.email = "Invalid email format.";
+    if (!authValues.soDt) newErrors.soDt = "Phone number is required.";
+    if (!authValues.matKhau) newErrors.matKhau = "Password is required.";
+    else if (authValues.matKhau.length < 6) newErrors.matKhau = "Password must be at least 6 characters.";
+    if (!authValues.xacNhanMatKhau) newErrors.xacNhanMatKhau = "Please confirm your password.";
+    else if (authValues.matKhau !== authValues.xacNhanMatKhau) newErrors.xacNhanMatKhau = "Passwords do not match.";
+    return newErrors;
+  };
 
   const handleOnSubmit = (event) => {
     event.preventDefault();
+    let newErrors = {};
 
     if (mode === "/login") {
+      newErrors = validateLogin();
+      if (Object.keys(newErrors).length) {
+        setErrors(newErrors);
+        return;
+      }
       const loginData = {
         taiKhoan: authValues.taiKhoan,
         matKhau: authValues.matKhau,
       };
       handleLogin(loginData);
     } else {
-      if (authValues.matKhau !== authValues.xacNhanMatKhau) {
-        alert("Passwords don't match");
+      newErrors = validateRegister();
+      if (Object.keys(newErrors).length) {
+        setErrors(newErrors);
         return;
       }
-
       const registerData = {
         taiKhoan: authValues.taiKhoan,
         matKhau: authValues.matKhau,
         email: authValues.email,
         soDt: authValues.soDt,
-        maNhom: authValues.maNhom,
-        hoTen: authValues.hoTen
+        hoTen: authValues.hoTen,
+        maNhom: "GP00",
+        maLoaiNguoiDung: "KhachHang",
       };
       handleRegister(registerData);
     }
   };
+
+  const isError = isLoginError | isRegisterError;
+
+  if (isError) {
+    console.log("This is error")
+  }
 
   return (
     <div className="w-full max-w-md relative z-10">
@@ -111,7 +147,10 @@ const AuthForm = (props) => {
         </h3>
 
         <div className="space-y-6">
-          <form onSubmit={handleOnSubmit} action="" className="space-y-4" >
+          <form onSubmit={handleOnSubmit} className="space-y-4">
+            {errors.form && (
+              <div className="text-red-500 text-center mb-2">{errors.form}</div>
+            )}
             {mode === "/login" ? (
               <>
                 <div className="space-y-4">
@@ -121,16 +160,18 @@ const AuthForm = (props) => {
                   >
                     Username
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="text"
-                      name="taiKhoan"
-                      id="taiKhoan"
-                      placeholder="Enter your username"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.taiKhoan}
+                    type="text"
+                    name="taiKhoan"
+                    id="taiKhoan"
+                    placeholder="Enter your username"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.taiKhoan && (
+                    <div className="text-red-500 text-sm">{errors.taiKhoan}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -139,31 +180,18 @@ const AuthForm = (props) => {
                   >
                     Password
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="password"
-                      name="matKhau"
-                      id="matKhau"
-                      placeholder="Enter your password"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      name="remember-me"
-                      id="remember-me"
-                      className="border-slate-600 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600 rounded-sm"
-                    />
-                    <span className="text-sm text-slate-300">Remember me</span>
-                  </div>
-                  <NavLink className="text-sm text-red-500 hover:text-red-400">
-                    Forgot password?
-                  </NavLink>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.matKhau}
+                    type="password"
+                    name="matKhau"
+                    id="matKhau"
+                    placeholder="Enter your password"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.matKhau && (
+                    <div className="text-red-500 text-sm">{errors.matKhau}</div>
+                  )}
                 </div>
               </>
             ) : (
@@ -175,16 +203,18 @@ const AuthForm = (props) => {
                   >
                     Full Name
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="text"
-                      name="hoTen"
-                      id="hoTen"
-                      placeholder="Enter your full name"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.hoTen}
+                    type="text"
+                    name="hoTen"
+                    id="hoTen"
+                    placeholder="Enter your full name"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.hoTen && (
+                    <div className="text-red-500 text-sm">{errors.hoTen}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -193,16 +223,18 @@ const AuthForm = (props) => {
                   >
                     Username
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="text"
-                      name="taiKhoan"
-                      id="taiKhoan"
-                      placeholder="Enter your username"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.taiKhoan}
+                    type="text"
+                    name="taiKhoan"
+                    id="taiKhoan"
+                    placeholder="Enter your username"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.taiKhoan && (
+                    <div className="text-red-500 text-sm">{errors.taiKhoan}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -211,16 +243,18 @@ const AuthForm = (props) => {
                   >
                     Email
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="text"
-                      name="email"
-                      id="email"
-                      placeholder="Enter your email"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.email}
+                    type="email"
+                    name="email"
+                    id="email"
+                    placeholder="Enter your email"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.email && (
+                    <div className="text-red-500 text-sm">{errors.email}</div>
+                  )}
                 </div>
                 <div className="space-y-4">
                   <label
@@ -229,16 +263,18 @@ const AuthForm = (props) => {
                   >
                     Phone Number
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="text"
-                      name="soDt"
-                      id="soDt"
-                      placeholder="Enter your phone number"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.soDt}
+                    type="text"
+                    name="soDt"
+                    id="soDt"
+                    placeholder="Enter your phone number"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.soDt && (
+                    <div className="text-red-500 text-sm">{errors.soDt}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -247,16 +283,18 @@ const AuthForm = (props) => {
                   >
                     Password
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="password"
-                      name="matKhau"
-                      id="matKhau"
-                      placeholder="Enter your password"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.matKhau}
+                    type="password"
+                    name="matKhau"
+                    id="matKhau"
+                    placeholder="Enter your password"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.matKhau && (
+                    <div className="text-red-500 text-sm">{errors.matKhau}</div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label
@@ -265,28 +303,32 @@ const AuthForm = (props) => {
                   >
                     Confirm Password
                   </label>
-                  <div className="relative">
-                    <input
-                      onChange={handleOnChange}
-                      type="password"
-                      name="xacNhanMatKhau"
-                      id="xacNhanMatKhau"
-                      placeholder="Confirm your password"
-                      className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
-                    />
-                  </div>
+                  <input
+                    onChange={handleOnChange}
+                    value={authValues.xacNhanMatKhau}
+                    type="password"
+                    name="xacNhanMatKhau"
+                    id="xacNhanMatKhau"
+                    placeholder="Confirm your password"
+                    className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder-slate-400 h-12 rounded-lg w-full"
+                  />
+                  {errors.xacNhanMatKhau && (
+                    <div className="text-red-500 text-sm">{errors.xacNhanMatKhau}</div>
+                  )}
                 </div>
               </>
             )}
-
             <button
               type="submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white h-12 text-lg font-semibold rounded-lg"
             >
-              {isLoading ? "Processing..." : (mode === "/login" ? "Sign In" : "Create Account")}
+              {isLoading
+                ? "Processing..."
+                : mode === "/login"
+                ? "Sign In"
+                : "Create Account"}
             </button>
           </form>
-
           <div className="text-center">
             <p className="text-slate-400">
               {mode === "/login" ? (
@@ -317,5 +359,6 @@ const AuthForm = (props) => {
     </div>
   );
 };
+
 
 export default AuthForm;
