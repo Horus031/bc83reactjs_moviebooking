@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { getMovieListApi, deleteMovieApi } from "../../services/movie.api";
-import AddMovieForm from "./AddMovieForm";
 import EditMovieForm from "./EditMovieForm";
 import AddScheduleForm from "./AddScheduleForm";
 import MovieScheduleList from "./MovieScheduleList";
 import { FaEdit, FaTrash, FaCalendarAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const MovieList = () => {
   const [movieList, setMovieList] = useState([]);
   const [keyword, setKeyword] = useState("");
-  const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [showScheduleList, setShowScheduleList] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
+
+  const navigate = useNavigate();
 
   const fetchMovies = async (tuKhoa = "") => {
     const allMovies = await getMovieListApi("GP01");
@@ -45,8 +46,8 @@ const MovieList = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">🎬 Quản lý phim</h2>
         <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          onClick={() => navigate("/admin/films/add")}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
           Thêm phim
         </button>
@@ -63,13 +64,13 @@ const MovieList = () => {
         />
         <button
           type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
         >
-          Tìm
+          Tìm kiếm
         </button>
       </form>
 
-      {/* Table */}
+      {/* Movie Table */}
       <div className="overflow-x-auto bg-white shadow-md rounded-lg">
         <table className="table-auto w-full border-collapse text-sm text-left">
           <thead className="bg-gray-100">
@@ -125,9 +126,7 @@ const MovieList = () => {
                       setSelectedMovie(movie);
                       setShowScheduleList(true);
                     }}
-                  >
-                    Xem lịch
-                  </button>
+                  ></button>
                   <button
                     className="text-red-600 hover:text-red-800"
                     onClick={() => handleDelete(movie.maPhim)}
@@ -142,39 +141,25 @@ const MovieList = () => {
         </table>
       </div>
 
-      {/* Add Movie */}
-      {showAddForm && (
-        <AddMovieForm
-          onClose={() => setShowAddForm(false)}
-          onRefresh={fetchMovies}
-        />
-      )}
-
-      {/* Edit Movie */}
+      {/* Form Edit hoặc Schedule (dùng chung trạng thái show và selectedMovie) */}
       {showEditForm && selectedMovie && (
         <EditMovieForm
           movie={selectedMovie}
           onClose={() => setShowEditForm(false)}
-          onRefresh={fetchMovies}
         />
       )}
 
-      {/* Add Schedule */}
       {showScheduleForm && selectedMovie && (
         <AddScheduleForm
-          movieId={selectedMovie.maPhim}
+          movie={selectedMovie}
           onClose={() => setShowScheduleForm(false)}
         />
       )}
 
-      {/* View Schedule List */}
       {showScheduleList && selectedMovie && (
         <MovieScheduleList
-          movieId={selectedMovie.maPhim}
-          onClose={() => {
-            setShowScheduleList(false);
-            setSelectedMovie(null);
-          }}
+          movie={selectedMovie}
+          onClose={() => setShowScheduleList(false)}
         />
       )}
     </div>
