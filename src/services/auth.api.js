@@ -7,6 +7,7 @@ export const loginApi = async (values) => {
     return response.data.content;
   } catch (error) {
     alert(error.response?.data.content)
+    return
   }
 };
 
@@ -16,6 +17,7 @@ export const registerApi = async (values) => {
     return response;
   } catch (error) {
     alert(error.response?.data.content)
+    return
   }
 };
 
@@ -30,6 +32,7 @@ export const getUserListApi = async (tuKhoa = "") => {
     return response.data.content;
   } catch (error) {
     alert(error.response?.data.content)
+    return
   }
 };
 
@@ -41,5 +44,6 @@ export const deleteUserApi = async (taiKhoan) => {
     return response.data.content;
   } catch (error) {
     alert(error.response?.data.content)
+    return
   }
 };
